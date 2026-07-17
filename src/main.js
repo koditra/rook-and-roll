@@ -5,30 +5,100 @@ import { Markers } from "cm-chessboard/src/extensions/markers/Markers.js";
 
 const chess = new Chess();
 const statusEl = document.getElementById("status");
+const gameInfoEl = document.getElementById("game-info");
+
+let gameMode = 'none';
+let myColor = COLOR.white; 
+let isConnected = false;
+let peerConnection = null;
+const peer = new Peer();
+
+const landingScreen = document.getElementById("landing-screen");
+const appScreen = document.getElementById("app-screen");
+const networkMenu = document.getElementById("network-menu");
+const appTitle = document.getElementById("app-title");
+const dropdownMenu = document.getElementById("dropdown-menu");
+
+const board = new Chessboard(document.getElementById("board"), {
+  position: chess.fen(),
+  assetsUrl: "https://cdn.jsdelivr.net/npm/cm-chessboard@8.12.12/assets/",
+  extensions: [{ class: Markers }, { class: Arrows }]
+});
+
+document.getElementById("hamburger-btn").addEventListener("click", () => {
+  dropdownMenu.classList.toggle("hidden");
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".dropdown-wrapper")) {
+    dropdownMenu.classList.add("hidden");
+  }
+});
+
+document.getElementById("flip-board-btn").addEventListener("click", () => {
+  const currentOri = board.getOrientation();
+  board.setOrientation(currentOri === COLOR.white ? COLOR.black : COLOR.white, true);
+  dropdownMenu.classList.add("hidden"); // close menu after clicking
+});
+
+document.getElementById("btn-offline").addEventListener("click", () => {
+  gameMode = 'offline';
+  landingScreen.classList.remove("active");
+  appScreen.classList.add("active");
+  appTitle.innerText = "Offline Match";
+  updateStatus();
+});
+
+document.getElementById("btn-online").addEventListener("click", () => {
+  gameMode = 'online';
+  landingScreen.classList.remove("active");
+  appScreen.classList.add("active");
+  networkMenu.classList.remove("hidden");
+  appTitle.innerText = "Online Match";
+  updateStatus();
+});
+
 
 function updateStatus() {
+  if (gameMode === 'online' && !isConnected) {
+    statusEl.innerText = "Waiting for opponent...";
+    return;
+  }
+  
   if (chess.isCheckmate()) {
-    statusEl.innerText = `Game Over! ${chess.turn() === 'w' ? 'Black' : 'White'} wins by Checkmate!`;
+    statusEl.innerText = `Game Over! ${chess.turn() === 'w' ? 'Black' : 'White'} wins!`;
   } else if (chess.isDraw()) {
-    statusEl.innerText = "Game Over! Draw game.";
+    statusEl.innerText = "Game Over! Draw.";
   } else {
-    statusEl.innerText = `${chess.turn() === 'w' ? "White" : "Black"}'s Turn`;
+    if (gameMode === 'offline') {
+      statusEl.innerText = `${chess.turn() === 'w' ? "White" : "Black"}'s Turn`;
+    } else {
+      const turnColor = chess.turn() === 'w' ? COLOR.white : COLOR.black;
+      statusEl.innerText = turnColor === myColor ? "Your Turn!" : "Opponent's Turn...";
+    }
   }
 }
 
 function inputHandler(event) {
+  if (gameMode === 'online' && !isConnected) return false;
+
   switch (event.type) {
     case INPUT_EVENT_TYPE.moveInputStarted:
       const piece = chess.get(event.squareFrom);
-      return piece && piece.color === chess.turn();
+      const pieceColor = piece ? (piece.color === 'w' ? COLOR.white : COLOR.black) : null;
+      const turnColor = chess.turn() === 'w' ? COLOR.white : COLOR.black;
+      
+      // Basic rule: can only move the piece of the current turn
+      if (pieceColor !== turnColor) return false;
+
+      // Online rule: can only move if it's actually your assigned color
+      if (gameMode === 'online' && pieceColor !== myColor) return false;
+      
+      return true;
 
     case INPUT_EVENT_TYPE.validateMoveInput:
       try {
-        chess.move({
-          from: event.squareFrom,
-          to: event.squareTo,
-          promotion: "q" 
-        });
+        chess.move({ from: event.squareFrom, to: event.squareTo, promotion: "q" });
         return true; 
       } catch (error) {
         return false; 
@@ -38,22 +108,49 @@ function inputHandler(event) {
       board.setPosition(chess.fen(), true);
       updateStatus();
       
-      setTimeout(() => {
-        const nextTurnColor = chess.turn() === 'w' ? COLOR.white : COLOR.black;
-        board.setOrientation(nextTurnColor, true);
-      }, 400);
-      
+      if (gameMode === 'online' && peerConnection) {
+        peerConnection.send(chess.fen());
+      }
       break;
   }
 }
 
-const board = new Chessboard(document.getElementById("board"), {
-  position: chess.fen(),
-  assetsUrl: "https://cdn.jsdelivr.net/npm/cm-chessboard@8.12.12/assets/",
-  extensions: [
-    { class: Markers },
-    { class: Arrows }
-  ]
+board.enableMoveInput(inputHandler);
+
+function setupNetworkListeners(conn) {
+  peerConnection = conn;
+  conn.on('open', () => {
+    isConnected = true;
+    gameInfoEl.innerText = "Connected! Game Started.";
+    updateStatus();
+  });
+  conn.on('data', (fenData) => {
+    chess.load(fenData);
+    board.setPosition(fenData, true);
+    updateStatus();
+  });
+}
+
+document.getElementById('host-btn').addEventListener('click', () => {
+  myColor = COLOR.white;
+  board.setOrientation(COLOR.white);
+  const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+  const hostPeer = new Peer(roomCode);
+  
+  hostPeer.on('open', (id) => {
+    gameInfoEl.innerText = `Tell friend to join ID: ${id}`;
+  });
+  hostPeer.on('connection', (conn) => {
+    setupNetworkListeners(conn);
+  });
 });
 
-board.enableMoveInput(inputHandler);
+document.getElementById('join-btn').addEventListener('click', () => {
+  const joinId = document.getElementById('join-id').value.toUpperCase();
+  if (!joinId) return;
+  myColor = COLOR.black;
+  board.setOrientation(COLOR.black); 
+  gameInfoEl.innerText = `Connecting to ${joinId}...`;
+  const conn = peer.connect(joinId);
+  setupNetworkListeners(conn);
+});
