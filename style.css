@@ -7,14 +7,106 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   min-height: 100vh;
 }
 
 h1 {
-  margin-bottom: 10px;
+  margin: 0;
 }
 
+/* Screen Management */
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.screen.active {
+  display: flex;
+}
+
+/* Landing Page */
+.landing-buttons {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.landing-buttons button {
+  padding: 15px 30px;
+  font-size: 1.1rem;
+}
+
+/* Top Bar & Hamburger Menu */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 450px;
+  max-width: 90vw;
+  margin-bottom: 15px;
+}
+.icon-btn {
+  background: transparent;
+  font-size: 1.5rem;
+  padding: 5px 10px;
+}
+.icon-btn:hover {
+  background: #333;
+}
+.dropdown-wrapper {
+  position: relative;
+}
+.dropdown-content {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #2a2a2a;
+  min-width: 150px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+  border-radius: 8px;
+  border: 1px solid #444;
+  z-index: 10;
+  overflow: hidden;
+}
+.dropdown-content.hidden {
+  display: none;
+}
+.dropdown-content button {
+  width: 100%;
+  background: none;
+  text-align: left;
+  border-radius: 0;
+  padding: 12px 16px;
+}
+.dropdown-content button:hover {
+  background-color: #444;
+}
+
+/* General UI */
+.menu-container {
+  background-color: #2a2a2a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #3a3a3a;
+  width: 450px;
+  max-width: 90vw;
+  box-sizing: border-box;
+}
+.menu-container.hidden {
+  display: none;
+}
+.join-area { display: flex; gap: 10px; }
+input { flex-grow: 1; padding: 8px; background: #1a1a1a; border: 1px solid #555; color: white; border-radius: 4px; }
+button { padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+button:hover { background-color: #45a049; }
+.game-info { font-size: 0.9rem; color: #aaa; text-align: center; }
+
+/* Board */
 #board {
   width: 450px;
   max-width: 90vw;
@@ -22,7 +114,6 @@ h1 {
   border-radius: 4px;
   overflow: hidden;
 }
-
 .status-container {
   margin-top: 20px;
   font-size: 1.25rem;
@@ -31,4 +122,8 @@ h1 {
   padding: 10px 20px;
   border-radius: 8px;
   border: 1px solid #3a3a3a;
+  width: 450px;
+  max-width: 90vw;
+  box-sizing: border-box;
+  text-align: center;
 }
