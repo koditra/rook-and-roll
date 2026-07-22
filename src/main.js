@@ -48,25 +48,47 @@ document.getElementById("flip-board-btn").addEventListener("click", () => {
   dropdownMenu.classList.add("hidden"); // close menu after clicking
 });
 
-// Start Offline Game
-document.getElementById("btn-offline").addEventListener("click", () => {
-  gameMode = 'offline';
-  landingScreen.classList.remove("active");
-  appScreen.classList.add("active");
-  appTitle.innerText = "Offline Match";
-  updateStatus();
+// offline button
+document.getElementById("btn-offline").addEventListener("click", (e) => {
+  const button = e.currentTarget;
+
+  button.classList.add("pressed");
+
+  setTimeout(() => {
+    gameMode = "offline";
+
+    landingScreen.classList.remove("active");
+    appScreen.classList.add("active");
+
+    appTitle.innerText = "Offline Match";
+    updateStatus();
+
+    button.classList.remove("pressed");
+  }, 150);
 });
 
-// Start Online Flow
-document.getElementById("btn-online").addEventListener("click", () => {
-  gameMode = 'online';
-  landingScreen.classList.remove("active");
-  appScreen.classList.add("active");
-  networkMenu.classList.remove("hidden");
-  appTitle.innerText = "Online Match";
-  updateStatus();
-});
 
+// online button
+
+document.getElementById("btn-online").addEventListener("click", (e) => {
+  const button = e.currentTarget;
+
+  button.classList.add("pressed");
+
+  setTimeout(() => {
+    gameMode = "online";
+
+    landingScreen.classList.remove("active");
+    appScreen.classList.add("active");
+
+    networkMenu.classList.remove("hidden");
+    appTitle.innerText = "Online Match";
+
+    updateStatus();
+
+    button.classList.remove("pressed");
+  }, 150);
+});
 
 // Game Logic below
 
